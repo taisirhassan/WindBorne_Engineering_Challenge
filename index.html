@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WindBorne Air Quality Tracker</title>
+    <meta name="description" content="Track real-time air quality data from WindBorne's atmospheric balloons" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://windborne-air-quality.vercel.app/" />
+    <meta property="og:title" content="WindBorne Air Quality Tracker" />
+    <meta property="og:description" content="Interactive visualization of air quality data from WindBorne's balloon constellation" />
+    <meta property="og:image" content="/og-image.jpg" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://windborne-air-quality.vercel.app/" />
+    <meta property="twitter:title" content="WindBorne Air Quality Tracker" />
+    <meta property="twitter:description" content="Interactive visualization of air quality data from WindBorne's balloon constellation" />
+    <meta property="twitter:image" content="/og-image.jpg" />
+    
+    <!-- Prevent flash of incorrect theme -->
+    <script>
+      (function() {
+        const preferredTheme = localStorage.getItem('theme-preference');
+        const systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = preferredTheme || (systemPrefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+        
+        // Apply a class to body for immediate theme styling
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark-theme');
+        }
+      })();
+    </script>
+    <style>
+      /* Minimal styles to prevent flash of incorrect theme */
+      html.dark-theme {
+        background-color: #121212;
+        color: #ffffff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

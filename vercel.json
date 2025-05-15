@@ -1,0 +1,26 @@
+{
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "routes": [
+    {
+      "src": "/treasure/(.*)",
+      "dest": "https://a.windbornesystems.com/treasure/$1"
+    },
+    {
+      "src": "/openaq/(.*)",
+      "dest": "https://api.openaq.org/$1"
+    },
+    {
+      "src": "/waqi/(.*)",
+      "dest": "https://api.waqi.info/$1"
+    },
+    { 
+      "handle": "filesystem"
+    },
+    {
+      "src": "/.*",
+      "dest": "/index.html"
+    }
+  ]
+} 
