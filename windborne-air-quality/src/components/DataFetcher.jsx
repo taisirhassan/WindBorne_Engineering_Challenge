@@ -8,7 +8,7 @@ import {
   Paper,
   useTheme
 } from '@mui/material';
-import pLimit from 'p-limit-v3';
+import pLimit from 'p-limit';
 // p-limit is used to limit the number of concurrent HTTP requests
 
 function DataFetcher({ timeIndex, setBalloonData, setAvailableTimeIndices, setInvalidTimeIndices, mode }) {

@@ -32,7 +32,7 @@ You can view historical data by selecting different time points from the dropdow
 
 ## Node.js Compatibility
 
-This project uses Vite with `"type": "module"` in package.json, which means it uses ES modules by default. For broader compatibility with different Node.js environments, we use `p-limit-v3` instead of the ESM-only `p-limit` package. This ensures the application works in both ESM and CommonJS environments without requiring experimental module flags.
+This project uses Vite with `"type": "module"` in package.json, which means it uses ES modules by default. We use the standard `p-limit` package, which is an ESM package but compatible with modern Node.js environments. If you encounter any issues with the package in CommonJS environments, you may need to use the `--experimental-modules` flag or update to a more recent Node.js version that has better ESM support.
 
 ## Why Air Quality Visualization?
 
