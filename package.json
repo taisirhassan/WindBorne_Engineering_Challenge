@@ -16,8 +16,10 @@
     "@mui/icons-material": "^7.1.0",
     "@mui/material": "^7.1.0",
     "@tanstack/react-query": "^5.76.1",
+    "aqi-calculator": "^1.1.3",
     "axios": "^1.9.0",
     "leaflet": "^1.9.4",
+    "p-limit-v3": "^3.1.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-leaflet": "^5.0.0"

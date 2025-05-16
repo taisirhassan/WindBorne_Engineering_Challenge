@@ -10,6 +10,11 @@ import {
   Chip,
   CircularProgress
 } from '@mui/material';
+import aqiCalculator from 'aqi-calculator';
+import PropTypes from 'prop-types';
+
+// Isomorphic useLayoutEffect: use useLayoutEffect on client, useEffect on server
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 // Function to determine marker color based on altitude
 const getAltitudeColor = (altitude) => {
@@ -40,8 +45,11 @@ const getAQIStatus = (aqi) => {
 };
 
 // Function to get AQI from OpenAQ API
-const fetchAirQuality = async (lat, lon) => {
-  let openAqUrl = '';
+const fetchAirQuality = async (lat, lon, signal) => {
+  if (!import.meta.env.VITE_OPENAQ_API_KEY) {
+    return { noData: true, location: 'API key not configured', source: 'Config' };
+  }
+   let openAqUrl = '';
 
   try {
     // Use the OPENAQ API with the key from environment variables
@@ -53,6 +61,7 @@ const fetchAirQuality = async (lat, lon) => {
       
       const locationsResponse = await axios.get(openAqUrl, { 
         timeout: 15000, // Increased timeout
+        signal,
         headers: { 
           "X-API-Key": openaqApiKey,  // API key must be sent in X-API-Key header
           "Accept": "application/json"
@@ -79,6 +88,7 @@ const fetchAirQuality = async (lat, lon) => {
             
             const latestResponse = await axios.get(latestUrl, {
               timeout: 15000,
+              signal,
               headers: { 
                 "X-API-Key": openaqApiKey,
                 "Accept": "application/json"
@@ -99,9 +109,9 @@ const fetchAirQuality = async (lat, lon) => {
                 
                 // First check if we have data from any known PM2.5 sensors
                 for (const measurement of latestResponse.data.results) {
-                  if (knownPM25SensorIds.includes(measurement.sensorsId)) {
-                    pm25Value = measurement.value;
-                    pm25SensorId = measurement.sensorsId;
+                  if (knownPM25SensorIds.includes(measurement.sensorId)) {
+                    pm25Value = Number(measurement.value);
+                    pm25SensorId = measurement.sensorId;
                     pm25SensorName = "Known PM2.5 sensor";
                     break;
                   }
@@ -113,26 +123,26 @@ const fetchAirQuality = async (lat, lon) => {
                     // Check for PM2.5 values in various possible formats
                     // Option 1: Direct parameter check
                     if (measurement.parameter?.name === 'pm25' || measurement.parameter?.id === 2) {
-                      pm25Value = measurement.value;
-                      pm25SensorId = measurement.sensorsId || measurement.sensor?.id;
+                      pm25Value = Number(measurement.value);
+                      pm25SensorId = measurement.sensorId || measurement.sensor?.id;
                       pm25SensorName = measurement.parameter?.name || "PM2.5";
                       break;
                     }
                     
                     // Option 2: Via sensor reference
                     if (measurement.sensor?.parameter?.name === 'pm25' || measurement.sensor?.parameter?.id === 2) {
-                      pm25Value = measurement.value;
-                      pm25SensorId = measurement.sensorsId || measurement.sensor?.id;
+                      pm25Value = Number(measurement.value);
+                      pm25SensorId = measurement.sensorId || measurement.sensor?.id;
                       pm25SensorName = measurement.sensor?.parameter?.name || "PM2.5";
                       break;
                     }
                     
-                    // Option 3: Via sensorsId lookup
-                    if (measurement.sensorsId) {
-                      const matchingSensor = location.sensors?.find(s => s.id === measurement.sensorsId);
+                    // Option 3: Via sensorId lookup
+                    if (measurement.sensorId) {
+                      const matchingSensor = location.sensors?.find(s => s.id === measurement.sensorId);
                       if (matchingSensor && (matchingSensor.parameter?.name === 'pm25' || matchingSensor.parameter?.id === 2)) {
-                        pm25Value = measurement.value;
-                        pm25SensorId = measurement.sensorsId;
+                        pm25Value = Number(measurement.value);
+                        pm25SensorId = measurement.sensorId;
                         pm25SensorName = matchingSensor.parameter?.name || "PM2.5";
                         break;
                       }
@@ -141,8 +151,8 @@ const fetchAirQuality = async (lat, lon) => {
                     // Option 4: Check unit or name for PM2.5 indicators
                     const measurementName = measurement.name || measurement.sensor?.name || '';
                     if (measurementName.toLowerCase().includes('pm25') || measurementName.toLowerCase().includes('pm2.5')) {
-                      pm25Value = measurement.value;
-                      pm25SensorId = measurement.sensorsId || measurement.sensor?.id;
+                      pm25Value = Number(measurement.value);
+                      pm25SensorId = measurement.sensorId || measurement.sensor?.id;
                       pm25SensorName = measurementName;
                       break;
                     }
@@ -151,8 +161,8 @@ const fetchAirQuality = async (lat, lon) => {
               }
               
               if (pm25Value !== null) {
-                // For PM2.5 in μg/m³, roughly: AQI = PM2.5 * 4.5 (simplification)
-                const aqiValue = Math.round(pm25Value * 4.5);
+                // Use aqi-calculator for accurate AQI conversion
+                const aqiValue = aqiCalculator.aqiFromPm25(pm25Value);
                 
                 return {
                   pm25: pm25Value,
@@ -199,7 +209,7 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
     Math.sin(dLon/2) * Math.sin(dLon/2); 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
   const d = R * c; // Distance in km
-  return Math.round(d);
+  return d; // keep as float; round only for display
 }
 
 const deg2rad = (deg) => {
@@ -210,8 +220,8 @@ const deg2rad = (deg) => {
 function MapUpdater({ balloonData }) {
   const map = useMap();
   
-  // Use useLayoutEffect to ensure this runs after DOM mutations but before paint
-  useLayoutEffect(() => {
+  // Use isomorphic layout effect to avoid SSR warnings
+  useIsomorphicLayoutEffect(() => {
     if (map) { // Ensure map instance exists
       if (balloonData.length > 0) {
         const lats = balloonData.map(b => b[0]);
@@ -255,11 +265,11 @@ function Map({ balloonData }) {
     <div className="map-container">
       <MapContainer 
         center={[0, 0]} 
-        zoom={2} 
+        zoom={3}          // ≥ minZoom (or lower minZoom instead)
         style={{ height: '100%', width: '100%', background: '#a4c9de' }}
         maxBounds={[[-90, -180], [90, 180]]}
         maxBoundsViscosity={1.0}
-        minZoom={1}
+        minZoom={2}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -268,7 +278,7 @@ function Map({ balloonData }) {
         />
         
         {balloonData.map((balloon, index) => (
-          <BalloonMarker key={index} balloon={balloon} index={index} />
+          <BalloonMarker key={`balloon-${index}`} balloon={balloon} index={index} />
         ))}
         
         <MapUpdater balloonData={balloonData} />
@@ -315,7 +325,9 @@ function Map({ balloonData }) {
             { color: "#00e400", label: "Good (0-50)" },
             { color: "#ffff00", label: "Moderate (51-100)" },
             { color: "#ff7e00", label: "Unhealthy for Sensitive Groups (101-150)" },
-            { color: "#ff0000", label: "Unhealthy (151-200)" }
+            { color: "#ff0000", label: "Unhealthy (151-200)" },
+            { color: "#99004c", label: "Very Unhealthy (201-300)" },
+            { color: "#7e0023", label: "Hazardous (301+)" }
           ].map((item, i) => (
             <Box key={i} sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
               <Box 
@@ -336,34 +348,89 @@ function Map({ balloonData }) {
   );
 }
 
+Map.propTypes = {
+  balloonData: PropTypes.arrayOf(
+    PropTypes.arrayOf(PropTypes.number.isRequired).isRequired
+  ).isRequired
+};
+
 // Separate component for balloon markers to handle air quality data loading
 function BalloonMarker({ balloon, index }) {
   const [lat, lon, altitude] = balloon;
   const [airQuality, setAirQuality] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const abortControllerRef = React.useRef(null);
+  const isMounted = React.useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
   
   // Load air quality data when popup is opened
   const handlePopupOpen = () => {
     if (!airQuality && !isLoading) {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
       const loadAirQuality = async () => {
-        setIsLoading(true);
-        const data = await fetchAirQuality(lat, lon);
-        setAirQuality(data);
-        setIsLoading(false);
+        if (isMounted.current) setIsLoading(true);
+        try {
+          const data = await fetchAirQuality(lat, lon, controller.signal);
+          if (isMounted.current) setAirQuality(data);
+        } catch (err) {
+          if (
+            err.name === 'CanceledError' ||
+            err.name === 'AbortError' ||
+            err.code === 'ERR_CANCELED'
+          ) {
+            // Request was cancelled, do nothing
+          } else {
+            if (isMounted.current) {
+              setAirQuality({
+                noData: true,
+                error: true,
+                location: `Error retrieving air quality data`,
+                status: `API Error`,
+                source: "Error"
+              });
+            }
+          }
+        } finally {
+          if (isMounted.current) {
+            setIsLoading(false);
+            // Reset the abort controller reference to prevent accidental aborts on future requests
+            abortControllerRef.current = null;
+          }
+        }
       };
-      
       loadAirQuality();
     }
   };
   
+  // Cancel fetch if popup closes
+  const handlePopupClose = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+  };
+  
   return (
-    <CircleMarker
-      center={[lat, lon]}
-      radius={8}
-      color={getAltitudeColor(altitude)}
-      fillOpacity={0.8}
+ <CircleMarker
+   center={[lat, lon]}
+   radius={8}
+   pathOptions={{
+     color: getAltitudeColor(altitude),      // stroke
+     fillColor: getAltitudeColor(altitude),  // fill
+     fillOpacity: 0.8
+   }}
       eventHandlers={{
-        popupopen: handlePopupOpen
+        popupopen: handlePopupOpen,
+        popupclose: handlePopupClose
       }}
       className="fade-in"
     >
@@ -471,5 +538,10 @@ function BalloonMarker({ balloon, index }) {
     </CircleMarker>
   );
 }
+
+BalloonMarker.propTypes = {
+  balloon: PropTypes.arrayOf(PropTypes.number.isRequired).isRequired,
+  index: PropTypes.number.isRequired
+};
 
 export default Map; 

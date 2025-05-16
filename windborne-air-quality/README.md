@@ -30,10 +30,6 @@ When you click on a balloon marker, a popup displays detailed information about 
 
 You can view historical data by selecting different time points from the dropdown menu at the top of the page.
 
-## Node.js Compatibility
-
-This project uses Vite with `"type": "module"` in package.json, which means it uses ES modules by default. For broader compatibility with different Node.js environments, we use `p-limit-v3` instead of the ESM-only `p-limit` package. This ensures the application works in both ESM and CommonJS environments without requiring experimental module flags.
-
 ## Why Air Quality Visualization?
 
 Atmospheric balloons provide a unique opportunity to monitor air quality at various altitudes and across different regions. By combining this data with air quality information, we can help:
@@ -53,7 +49,7 @@ For demonstration purposes, this application uses simulated air quality data. In
 
 ```bash
 # Clone the repository
-git clone [repository-url]
+git clone https://github.com/taisirhassan/WindBorne_Engineering_Challenge.git
 
 # Navigate to the project directory
 cd windborne-air-quality

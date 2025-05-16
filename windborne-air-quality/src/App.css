@@ -1,0 +1,189 @@
+/* CSS Reset: based on modern best practices */
+/* 1. Use a more-intuitive box-sizing model */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* 2. Remove default margin and padding */
+* {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+
+/* 3. Set core body defaults */
+html, body {
+  height: 100%;
+}
+body {
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  background: #fff;
+  color: #222;
+}
+
+/* 4. Remove list styles on ul, ol elements with a list role, which suggests default styling will be removed */
+ul, ol {
+  list-style: none;
+}
+
+/* 5. Set images, videos, etc. to block and max-width 100% */
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* 6. Inherit fonts for form controls */
+input, button, textarea, select {
+  font: inherit;
+}
+
+/* 7. Remove default button styles */
+button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* 8. Remove anchor underline by default */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* 9. Remove default table spacing */
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/* 10. Set heading and paragraph overflow and wrapping */
+p, h1, h2, h3, h4, h5, h6 {
+  overflow-wrap: break-word;
+  word-wrap: break-word; /* Legacy fallback */
+}
+
+/* 11. Improve line wrapping for paragraphs and headings */
+p {
+  overflow-wrap: break-word;
+  word-wrap: break-word; /* Legacy fallback */
+}
+
+@supports (text-wrap: pretty) {
+  p {
+    text-wrap: pretty;
+  }
+}
+
+h1, h2, h3, h4, h5, h6 {
+  overflow-wrap: break-word;
+  word-wrap: break-word; /* Legacy fallback */
+}
+
+@supports (text-wrap: balance) {
+  h1, h2, h3, h4, h5, h6 {
+    text-wrap: balance;
+  }
+}
+
+/* 12. Root stacking context for React apps */
+#root, #__next {
+  isolation: isolate;
+}
+
+/* --- End CSS Reset --- */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.content {
+  flex: 1;
+  position: relative;
+}
+
+.map-container {
+  height: 100%;
+  width: 100%;
+}
+
+/* Leaflet specific overrides if needed */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  z-index: 0; /* Ensure map is at the base layer */
+}
+
+.leaflet-popup-content {
+  margin: 8px;
+  min-width: 200px;
+  z-index: 1200; /* Ensure popups appear above most UI elements */
+}
+
+/* Animations for smoother transitions */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.balloon-popup {
+  animation: scaleIn 0.3s ease-out;
+  transform-origin: bottom center;
+}
+
+@-webkit-keyframes scaleIn {
+  from { 
+    -webkit-transform: scale(0.8);
+    opacity: 0;
+  }
+  to { 
+    -webkit-transform: scale(1);
+    opacity: 1;
+  }
+}
+
+ @keyframes scaleIn {
+   from { 
+     transform: scale(0.8);
+     opacity: 0;
+   }
+   to { 
+     transform: scale(1);
+     opacity: 1;
+   }
+ }
+
+/* For smaller screens */
+@media (max-width: 600px) {
+  .leaflet-popup-content {
+    min-width: 160px;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 768px) {
+  .leaflet-popup-content {
+    min-width: 180px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .leaflet-popup-content {
+    min-width: 220px;
+  }
+}
+
+@media (min-width: 1025px) {
+  .leaflet-popup-content {
+    min-width: 260px;
+  }
+}
